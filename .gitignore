@@ -1,0 +1,25 @@
+# Scripts folder (contains API keys)
+99_Scripts/
+
+# Resource folder (raw data)
+99_Resource/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
