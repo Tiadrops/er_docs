@@ -12,8 +12,8 @@ __pycache__/
 .venv/
 venv/
 
-# Claude Code local settings (contains API keys)
-.claude/settings.local.json
+# Claude Code local settings
+.claude/
 
 # IDE
 .vscode/
@@ -22,6 +22,9 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# DeepLX binary
+99_Scripts/deeplx/
 
 # Temporary files
 *.tmp

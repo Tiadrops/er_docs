@@ -205,25 +205,43 @@ python translate_subtitles.py --channel ldy818 --video VIDEO_ID
 
 ---
 
-## 翻訳辞書
+## 翻訳システム（DeepLX + 辞書プレースホルダー）
 
-### 辞書ファイル
+### 概要
 
-`99_Scripts/translation/ko_ja_dictionary.json`
+DeepLXプロキシ（無料）+ 辞書プレースホルダー方式で韓日翻訳を行う。
+用語集の用語をプレースホルダーに置換→翻訳→復元で用語を制御する。
 
-### 辞書に追加すべき用語
+### ファイル構成
 
-1. **ゲーム固有用語**: スキル名、アイテム名、システム用語
-2. **キャラクター名**: プレイヤー名、NPC名
-3. **略語・スラング**: ゲームコミュニティで使われる略語
-4. **誤訳されやすい用語**: 機械翻訳で意味が変わってしまう用語
+| ファイル | 説明 |
+|---------|------|
+| `99_Scripts/translation/translator.py` | 翻訳モジュール本体 |
+| `99_Scripts/translation/ko_ja_glossary.json` | 用語集ソースデータ（219エントリ） |
+| `99_Scripts/translation/ko_ja_glossary_table.md` | 用語集の対応表（確認用） |
+| `99_Scripts/translation/ko_ja_dictionary.json` | 旧辞書（未使用、参考用に残存） |
+
+### 用語集のカテゴリ
+
+- **characters**: キャラクター名（97件）
+- **weapons**: 武器タイプ（23件）
+- **areas**: マップエリア（21件）
+- **game_modes**: ゲームモード（8件）
+- **mechanics**: ゲームメカニクス（68件）
+- **streaming**: 配信関連（3件）
+
+### 用語集の修正手順
+
+`ko_ja_glossary.json` を編集するだけで即反映（再アップロード不要）。
 
 ### 使い方
 
 ```python
 from translator import KoJaTranslator
+
 translator = KoJaTranslator()
 result = translator.translate("韓国語テキスト")
+results = translator.translate_batch(["テキスト1", "テキスト2"])
 ```
 
 ---
@@ -238,16 +256,51 @@ result = translator.translate("韓国語テキスト")
 | `nongroot` | 농루트 | ER攻略・解説 |
 | `gmiho` | 한미호 | マルティナ・ニア解説 |
 | `ldy818` | ldy818 | ER解説 |
+| `nebjjang` | 네브짱 | ER配信アーカイブ |
+| `s_hyun23` | 성현23 | ER解説 |
+| `kiro` | 키로 | ER解説 |
+| `jiseuk` | 지슥 | エイデン・ブレア・ヒスイ（ER PARTNERS） |
 
 ---
 
 ## 注意事項
 
+### APIキー
+
+`99_Scripts/youtube/.env` に保存:
+
+```
+YOUTUBE_API_KEY=xxx              # YouTube Data API
+DEEPL_API_KEY=xxx                # DeepL Pro API
+DEEPLX_URL=http://localhost:1188/translate  # DeepLX（旧方式、現在未使用）
+```
+
 ### YouTube API
 
-- APIキーは `99_Scripts/youtube/.env` に保存（`YOUTUBE_API_KEY=xxx`）
 - 1日10,000単位のクォータ制限あり
 - 大量取得は複数日に分けて実行
+
+### 翻訳バックエンド
+
+| 対象 | API | クラス | 理由 |
+|------|-----|--------|------|
+| コメント | DeepL Pro（有料） | `DeepLTranslator` | 量が少ない・重要情報が多い |
+| 動画タイトル | DeepL Pro（有料） | `DeepLTranslator` | 量が少ない |
+| 字幕 | Google翻訳（無料） | `KoJaTranslator` | 量が多い |
+
+**重要ルール**: DeepL Pro使用時は必ず**予想文字数をユーザーに提示し、承認を得てから**実行すること。`echo "y"` 等で自動承認してはいけない。
+
+### DeepL Pro
+
+- `DeepLTranslator` クラス（`translator.py`）
+- DeepL Glossary機能で `ko_ja_glossary.json` を使用（プレースホルダー方式不要）
+- `translate_owner_comments.py` 実行時に文字数見積もり＋確認UIあり
+
+### Google翻訳
+
+- `KoJaTranslator` クラス（`translator.py`）
+- 無料、字幕用
+- プレースホルダー方式で `ko_ja_glossary.json` を用語制御
 
 ### Windows環境
 
