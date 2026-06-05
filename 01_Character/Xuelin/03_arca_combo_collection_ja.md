@@ -3,9 +3,9 @@
 | 項目 | 内容 |
 |---|---|
 | 原題 | 슈린 실전 압축 콤보 모음? |
-| 著者 | 不明（arca.live 取得不可） |
-| 投稿日 | 不明 |
-| シーズン | S8（推定） |
+| 著者 | 不明 |
+| 投稿日 | 2025.07.24 22:20 |
+| シーズン | S8 |
 | サイト | Arca.live 이터널 리턴 채널 |
 | 原文URL | https://arca.live/b/bser/143249677 |
 | 韓国語原文 | [`_sources/03_arca_combo_collection_ko.md`](./_sources/03_arca_combo_collection_ko.md) |
