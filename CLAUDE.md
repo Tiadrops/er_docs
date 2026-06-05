@@ -1,55 +1,37 @@
 # Eternal Return Documentation Project
 
-## プロジェクト概要
+> プロジェクトの目的・整理方針・ドキュメント構成は [README.md](README.md) を参照。
+> このファイルは **収集・翻訳パイプラインの運用手順**（エージェント向け）に特化する。
 
-### 目的
+## プロジェクト要点（最小）
 
-**自分自身のEternal Return上達**が一番の目的。
-
-### フォーカス
-
-- **ミクロ（戦闘操作）** の上達に注力
-- マクロ（ルート・立ち回り）ではなく、戦闘時の動きを改善したい
-
-### 整理したい内容
-
-1. **チームファイト理論（キャラ非依存）** → `00_Overall/eternal_return_guide_v1_2.md`（**作成中**）
-   - 3線（ライン）の概念：1線/2線/3線のポジショニング
-   - アグロピンポン：視線の引きつけ・交代
-   - フォーカス原則：誰を殴るか
-   - 構成パターン：仕掛ける構成 vs 受ける構成
-   - 構図判断：手の長さ、進入タイミング
-   - ※ このガイドを完璧にすることが最終目標
-
-2. **ロール別の戦闘基礎**
-   - 全キャラ個別に最適化するのは現実的でないため、ロール（役割）ごとにカテゴライズ
-   - T（タンク）/ TB（タンブルーザー）/ B（ブルーザー）/ A（アサシン）/ SD（スキル型）/ AD（平打ち型）/ S（サポート）
-
-3. **キャラ別のミクロ**（参考情報として収集）
-   - 先行入力、スキル回し、コンボ等
-
-### 情報収集
-
-韓国の上位プレイヤー（主にTiaメイン）のYouTube・Discord等から情報を収集・翻訳。
-収集した情報は上記ガイドの改善・完成に活用する。
+- 目的: **自分自身のEternal Return上達**（マクロより**ミクロ＝戦闘操作**にフォーカス）
+- 最終目標: チームファイト理論ガイド `00_Overall/eternal_return_guide_v1_2.md`（**作成中**）の完成
+- 韓国上位プレイヤー（主にTiaメイン）の YouTube / Discord から収集・翻訳して活用
 
 ## ディレクトリ構造
 
 ```
 er_doc/
-├── CLAUDE.md                    # このファイル
-├── 99_Scripts/                  # 共通スクリプト
-│   ├── youtube/                 # YouTube収集ツール
-│   ├── discord/                 # Discord収集ツール
-│   └── translation/             # 翻訳モジュール
-└── 99_Resource/                 # チャンネル別データ
-    ├── Gmiho/
-    ├── Magic_Daniel_ER/
-    ├── Nongroot/
-    ├── Tzneu/
-    ├── Yeongman/
-    └── ...
+├── README.md                    # プロジェクト概要（人間向け）
+├── CLAUDE.md                    # このファイル（パイプライン運用手順）
+├── season_timeline.md           # 日付 ⇔ シーズン対応表
+├── 00_Overall/                  # キャラ非依存の理論・リファレンス  ← Git管理
+├── 01_Character/                # キャラ別ミクロ（Tia/Haze/Hyunwoo/NiaH/Xuelin） ← Git管理
+├── 99_Scripts/                  # 収集・翻訳ツール（gitignore）
+│   ├── youtube/                 #   YouTube収集ツール
+│   ├── discord/                 #   Discordフォーラム収集ツール
+│   ├── translation/             #   翻訳モジュール・用語集
+│   ├── transcribe_video.py      #   動画文字起こし（Whisper）
+│   └── *_srt_*.py               #   字幕クリーニング・マージ
+└── 99_Resource/                 # チャンネル別データ（gitignore）
+    ├── {ChannelName}/           #   YouTube収集データ
+    ├── autoarms/                #   Discordフォーラム（exports / translated）
+    └── videos/                  #   ローカル動画＋字幕
 ```
+
+**注意**: `99_Scripts/` `99_Resource/` `.claude/` は `.gitignore` 済み（APIキー・大容量データを含むため）。
+Git管理対象は `00_Overall` / `01_Character` / ルートのドキュメントのみ。
 
 ---
 
@@ -205,6 +187,66 @@ python translate_subtitles.py --channel ldy818 --video VIDEO_ID
 
 ---
 
+## Discord フォーラム収集手順
+
+`99_Scripts/discord/` でDiscordフォーラムのスレッドを収集・翻訳する。
+出力は `99_Resource/autoarms/`（`exports/` 生データ → `translated/` 翻訳済み）。
+
+```
+1. スレッド取得    →  fetch_forum_threads.py / export_threads.py
+2. タイトル抽出    →  extract_thread_titles.py
+3. 翻訳用に抽出    →  extract_threads_for_translation.py
+4. セクション翻訳  →  translate_sections.py
+```
+
+---
+
+## 動画文字起こし・字幕翻訳
+
+ローカル動画やVODから字幕を起こす。スキルとスクリプトの2系統。
+
+- **スキル**（`.claude/skills/`）
+  - `soop-download`: SoopLive VODダウンロード
+  - `video-to-ja-subtitle`: 動画→日本語字幕（Whisper large-v3 ＋ Claude翻訳）
+- **スクリプト**（`99_Scripts/`）
+  - `transcribe_video.py`: Whisperで文字起こし
+  - `check_srt_hallucinations.py` / `clean_srt_hallucinations.py`: 字幕の幻覚（誤認識）検出・除去
+  - `truncate_srt.py` / `merge_translations.py`: 字幕の整形・マージ
+  - `youtube/extract_burned_subtitles.py` / `translate_burned_subtitles.py`: 焼き込み字幕の抽出・翻訳
+
+出力例: `99_Resource/videos/`（`*.ko.srt` → `*.ko.cleaned.srt` → `*.ja.srt`）
+
+---
+
+## シーズン情報の補足
+
+翻訳・まとめた情報が **どのシーズンのものか** を添える際は
+[`season_timeline.md`](season_timeline.md)（EA〜S11、パッチバージョン対応）を参照。
+動画の投稿日からシーズンを逆引きできる。
+
+---
+
+## 翻訳記事・動画のヘッダー（必須）
+
+記事・動画を翻訳したら、ファイル冒頭に **必ず以下のメタ情報ヘッダー** を付けること。
+
+| 項目 | 内容 |
+|---|---|
+| 原題 | 이터) 현우1위 공략 |
+| 著者 | 조용히좀해 (freeingans**) |
+| 投稿日 | 2023.08.19 10:27 |
+| シーズン | S1 |
+| 原文URL | https://gall.dcinside.com/mgallery/board/view/?id=bser&no=4864487 |
+
+**ルール**:
+- **原題**: 翻訳せず原文（韓国語）のまま記載
+- **著者**: ハンドルネーム（IDがあれば併記）
+- **投稿日**: 原文の表記をそのまま（`yyyy.mm.dd hh:mm` 等）
+- **シーズン**: 投稿日から [`season_timeline.md`](season_timeline.md) で逆引きして記入（例: `S1`, `S9`）。不明なら `不明`
+- **原文URL**: 出典リンク。無い場合は `—`
+
+---
+
 ## 翻訳システム（DeepLX + 辞書プレースホルダー）
 
 ### 概要
@@ -217,7 +259,7 @@ DeepLXプロキシ（無料）+ 辞書プレースホルダー方式で韓日翻
 | ファイル | 説明 |
 |---------|------|
 | `99_Scripts/translation/translator.py` | 翻訳モジュール本体 |
-| `99_Scripts/translation/ko_ja_glossary.json` | 用語集ソースデータ（219エントリ） |
+| `99_Scripts/translation/ko_ja_glossary.json` | 用語集ソースデータ（約230エントリ） |
 | `99_Scripts/translation/ko_ja_glossary_table.md` | 用語集の対応表（確認用） |
 | `99_Scripts/translation/ko_ja_dictionary.json` | 旧辞書（未使用、参考用に残存） |
 
@@ -260,6 +302,14 @@ results = translator.translate_batch(["テキスト1", "テキスト2"])
 | `s_hyun23` | 성현23 | ER解説 |
 | `kiro` | 키로 | ER解説 |
 | `jiseuk` | 지슥 | エイデン・ブレア・ヒスイ（ER PARTNERS） |
+| `HydeeeeE0304` | 하이도 | ER解説 |
+| `OneCircle` | 한동그라미 | ER解説 |
+
+### Discord ソース
+
+| ソース | 説明 |
+|--------|------|
+| `autoarms` | Discordフォーラム（キャラ質問・立ち回り・チーム質問・設定 等のスレッド）→ `99_Resource/autoarms/` |
 
 ---
 

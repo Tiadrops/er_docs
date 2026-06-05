@@ -30,3 +30,8 @@ Thumbs.db
 *.tmp
 *.log
 /tmp
+
+# Video clips (keep local, manage outside git)
+*.mp4
+*.mkv
+*.webm
